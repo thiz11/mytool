@@ -1,0 +1,40 @@
+#!/bin/bash
+SUFF=$1
+FWORK=/home/seifer/sss/framework
+tp=$(realpath $0)
+bindir=$(dirname $tp)
+rundir=`pwd`
+stat $rundir/ff &>/dev/null
+if [ $? != "0" ]; then
+   type adb &>/dev/null
+   if [ $? != "0" ]; then
+	echo "Please put path/to/adb in your PATH"
+   exit 1;
+   else
+	adb push $bindir/fixde /data/local/tmp/
+	adb shell chmod 775 /data/local/tmp/fixde
+	adb shell "/data/local/tmp/fixde > /data/local/tmp/ff"
+	adb pull /data/local/tmp/ff $rundir
+	stat $rundir/ff &>/dev/null
+	if [ $? != "0" ]; then
+	echo "I can't take the dex offset file"
+	echo "Please check your device or adb. eg, Are you ROOT?"
+	exit 1;
+	fi
+    fi
+fi
+
+if [ $# == "1" ]; then
+	test -d $FWORK &>/dev/null
+	if [ $? != "0" ]; then
+	echo $FWORK": No such directory"
+	echo "You must be specity framework directory"
+	exit 1;
+	else
+	mkdir -p $rundir/out
+	cd $FWORK
+	java -Xmx496M -Xcheck:jni -Xbootclasspath/p:mediatek-op.jar:core.jar:core-junit.jar:bouncycastle.jar:ext.jar:framework.jar:telephony-common.jar:mms-common.jar:android.policy.jar:services.jar:apache-xml.jar:mediatek-common.jar:mediatek-framework.jar:secondary-framework.jar:CustomProperties.jar:mediatek-telephony-common.jar -Xmx496M -ea:framework-res.apk:mediatek-res.apk -cp mediatek-op.jar:core.jar:core-junit.jar:bouncycastle.jar:ext.jar:framework.jar:telephony-common.jar:mms-common.jar:android.policy.jar:services.jar:apache-xml.jar:mediatek-common.jar:mediatek-framework.jar:secondary-framework.jar:CustomProperties.jar:mediatek-telephony-common.jar -jar $bindir/baksmali.jar -d $FWORK -T $rundir/ff -a 17 -x $rundir/$SUFF -o $rundir/out/$SUFF
+	fi
+   else
+ echo ".........................."
+fi
